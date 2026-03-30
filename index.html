@@ -975,7 +975,7 @@
     }
 
     async function initRealtime() {
-      supabase
+      supabaseClient
         .channel('public:wishes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'wishes' }, async () => {
           await loadWishes();
