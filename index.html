@@ -967,7 +967,7 @@
       currentUser = data.session?.user || null;
       updateAuthUI();
 
-      supabase.auth.onAuthStateChange((_event, session) => {
+      supabaseClient.auth.onAuthStateChange((_event, session) => {
         currentUser = session?.user || null;
         updateAuthUI();
         renderWishes();
