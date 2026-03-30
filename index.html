@@ -264,7 +264,7 @@
     const SUPABASE_URL = 'https://akpqujrsntojiwgigjjn.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrcHF1anJzbnRvaml3Z2lnampuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODA2MjQsImV4cCI6MjA5MDQ1NjYyNH0.mKy1gb7PtdcIq2TfdzQfjts21_cEEhoWzmSaQA4AB2k';
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const translations = {
       sk: {
@@ -522,7 +522,7 @@
     }
 
     async function loadWishes() {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('wishes')
         .select('*')
         .order('created_at', { ascending: false });
@@ -802,7 +802,7 @@
 
       try {
         if (editingId) {
-          const { error } = await supabase
+          const { error } = await supabaseClient
             .from('wishes')
             .update({
               title,
@@ -817,7 +817,7 @@
           cancelEdit();
           showToast('toast_updated');
         } else {
-          const { error } = await supabase
+          const { error } = await supabaseClient
             .from('wishes')
             .insert({
               title,
@@ -857,7 +857,7 @@
       setButtonLoading(confirmBtn, '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>');
 
       try {
-        const { error } = await supabase
+        const { error } = await supabaseClient
           .from('wishes')
           .update({
             reserved: true,
@@ -882,7 +882,7 @@
 
     async function unreserveWish(wishId) {
       try {
-        const { error } = await supabase
+        const { error } = await supabaseClient
           .from('wishes')
           .update({
             reserved: false,
@@ -907,7 +907,7 @@
       confirmBtn.textContent = translations[currentLanguage].modal_delete_btn + '...';
 
       try {
-        const { error } = await supabase
+        const { error } = await supabaseClient
           .from('wishes')
           .delete()
           .eq('id', wishId);
@@ -932,7 +932,7 @@
       const password = document.getElementById('auth-password').value;
 
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (error) throw error;
 
         currentUser = data.user;
@@ -948,7 +948,7 @@
 
     async function signOutAdmin() {
       try {
-        const { error } = await supabase.auth.signOut();
+        const { error } = await supabaseClient.auth.signOut();
         if (error) throw error;
 
         currentUser = null;
@@ -963,7 +963,7 @@
     }
 
     async function initAuth() {
-      const { data } = await supabase.auth.getSession();
+      const { data } = await supabaseClient.auth.getSession();
       currentUser = data.session?.user || null;
       updateAuthUI();
 
