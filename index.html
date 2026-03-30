@@ -1,0 +1,948 @@
+<!doctype html>
+<html lang="sk" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Svadobný Wishlist</title>
+
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg-color: #fdf6f0;
+      --card-color: #ffffff;
+      --text-color: #44403c;
+      --primary-color: #d97706;
+      --accent-color: #b48c78;
+    }
+
+    .font-display { font-family: 'Cormorant Garamond', serif; }
+    .font-body { font-family: 'Nunito', sans-serif; }
+
+    body {
+      color: var(--text-color);
+      background: var(--bg-color);
+    }
+
+    .gradient-bg {
+      background: linear-gradient(135deg, #fdf6f0 0%, #fef3ec 50%, #fdf8f5 100%);
+    }
+
+    .card-shadow {
+      box-shadow: 0 4px 20px rgba(180, 140, 120, 0.1);
+    }
+
+    .reserved-overlay {
+      background: linear-gradient(135deg, rgba(180, 140, 120, 0.95), rgba(160, 120, 100, 0.95));
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    .toast {
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .image-upload-area { position: relative; }
+    .image-upload-area input[type="file"] { display: none; }
+
+    .image-preview {
+      max-height: 200px;
+      max-width: 100%;
+      border-radius: 0.5rem;
+      margin-top: 0.5rem;
+      object-fit: cover;
+    }
+  </style>
+</head>
+
+<body class="h-full font-body">
+  <div id="app" class="min-h-full gradient-bg overflow-auto">
+    <div class="flex justify-end p-4">
+      <div class="flex gap-2 bg-white/80 rounded-full card-shadow p-1">
+        <button id="lang-uk" class="lang-btn px-4 py-1.5 rounded-full font-medium text-sm transition-all text-stone-600 hover:text-stone-700" type="button">UA</button>
+        <button id="lang-sk" class="lang-btn px-4 py-1.5 rounded-full font-medium text-sm transition-all bg-amber-600 text-white" type="button">SK</button>
+      </div>
+    </div>
+
+    <header class="text-center py-12 px-4">
+      <div class="inline-block mb-4">
+        <svg width="60" height="60" viewBox="0 0 60 60" fill="none" class="mx-auto">
+          <path d="M30 55C30 55 5 40 5 22C5 12 13 5 23 5C27 5 30 8 30 8C30 8 33 5 37 5C47 5 55 12 55 22C55 40 30 55 30 55Z" fill="#d4a574" opacity="0.2" />
+          <path d="M30 50C30 50 10 37 10 22C10 14 16 8 24 8C27 8 30 11 30 11C30 11 33 8 36 8C44 8 50 14 50 22C50 37 30 50 30 50Z" stroke="#b48c78" stroke-width="2" fill="none" />
+        </svg>
+      </div>
+
+      <h1 id="page-title" class="font-display text-4xl md:text-5xl font-semibold text-stone-700 mb-2">Náš svadobný Wishlist</h1>
+      <p id="couple-names" class="font-display text-2xl text-amber-700 mb-1">Leročka &amp; Ľubčik</p>
+      <p id="wedding-date" class="text-stone-500 mb-4">25.04.2026</p>
+      <p id="welcome-message" class="text-stone-600 max-w-md mx-auto">Ďakujeme, že s nami oslavujete! Vyberte si darček a rezervujte si ho.</p>
+      <p id="flexible-text" class="text-stone-500 text-sm mt-2">alebo niečo podľa vášho uváženia</p>
+    </header>
+
+    <div class="flex justify-center mb-6 px-4">
+      <button id="admin-toggle" class="flex items-center gap-2 px-4 py-2 bg-white/80 rounded-full card-shadow text-stone-600 hover:bg-white transition-all" type="button">
+        <i data-lucide="settings" class="w-4 h-4"></i>
+        <span id="admin-toggle-text">Režim úpravy</span>
+      </button>
+    </div>
+
+    <div id="add-form" class="hidden max-w-2xl mx-auto mb-8 px-4">
+      <div class="bg-white rounded-2xl card-shadow p-6">
+        <h2 class="font-display text-2xl text-stone-700 mb-4 flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-6 h-6 text-amber-600"></i>
+          <span class="add-wish-title">Pridať želanie</span>
+        </h2>
+
+        <form id="wish-form" class="space-y-4">
+          <input type="hidden" id="edit-wish-id">
+
+          <div>
+            <label class="block text-sm font-medium text-stone-600 mb-1 wish-label-name">Názov *</label>
+            <input type="text" id="wish-title" required maxlength="120" class="w-full px-4 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none" placeholder="Kávovar Delonghi">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-stone-600 mb-1 wish-label-desc">Popis</label>
+            <textarea id="wish-description" rows="2" maxlength="500" class="w-full px-4 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none resize-none" placeholder="Krátko o želaní..."></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-stone-600 mb-1 wish-label-link">Odkaz</label>
+              <input type="text" id="wish-link" class="w-full px-4 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none" placeholder="https://...">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-stone-600 mb-1 wish-label-price">Odhadovaná cena</label>
+              <input type="text" id="wish-price" maxlength="50" class="w-full px-4 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none" placeholder="150 €">
+            </div>
+          </div>
+
+          <div class="image-upload-area">
+            <label class="block text-sm font-medium text-stone-600 mb-1 wish-label-image">Pridať foto</label>
+            <input type="file" id="wish-image-file" accept="image/*">
+            <button type="button" id="upload-image-btn" class="w-full px-4 py-2 border-2 border-dashed border-stone-300 rounded-lg text-stone-600 hover:border-amber-400 hover:text-amber-600 transition-colors flex items-center justify-center gap-2">
+              <i data-lucide="image-plus" class="w-5 h-5"></i>
+              <span class="upload-image-text">Vyberte foto</span>
+            </button>
+            <img id="image-preview" class="image-preview hidden" alt="Preview">
+          </div>
+
+          <div class="flex gap-3 pt-2">
+            <button type="submit" id="submit-btn" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-medium py-2.5 px-6 rounded-lg transition-colors flex items-center justify-center gap-2">
+              <i data-lucide="plus" class="w-5 h-5"></i>
+              <span class="submit-text">Pridať</span>
+            </button>
+
+            <button type="button" id="cancel-edit-btn" class="hidden flex-1 bg-stone-300 hover:bg-stone-400 text-stone-700 font-medium py-2.5 px-6 rounded-lg transition-colors">
+              Zrušiť
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="flex justify-center gap-8 mb-8 px-4">
+      <div class="text-center">
+        <p id="total-count" class="font-display text-3xl text-stone-700">0</p>
+        <p class="text-sm text-stone-500 stat-all">spolu želaní</p>
+      </div>
+      <div class="text-center">
+        <p id="available-count" class="font-display text-3xl text-emerald-600">0</p>
+        <p class="text-sm text-stone-500 stat-available">dostupné</p>
+      </div>
+      <div class="text-center">
+        <p id="reserved-count" class="font-display text-3xl text-amber-600">0</p>
+        <p class="text-sm text-stone-500 stat-reserved">rezervované</p>
+      </div>
+    </div>
+
+    <div id="wishlist" class="max-w-6xl mx-auto px-4 pb-12">
+      <div id="wishes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+      <div id="empty-state" class="hidden text-center py-16">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none" class="mx-auto mb-4 opacity-50">
+          <path d="M40 70C40 70 10 52 10 30C10 18 20 10 32 10C36 10 40 14 40 14C40 14 44 10 48 10C60 10 70 18 70 30C70 52 40 70 40 70Z" stroke="#b48c78" stroke-width="2" fill="none" />
+        </svg>
+        <p class="font-display text-xl text-stone-500 empty-state-text">Zoznam želaní je prázdny</p>
+        <p class="text-stone-400 mt-2 empty-state-desc">Zapnite režim úpravy a pridajte prvé želanie</p>
+      </div>
+    </div>
+
+    <div id="reserve-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-2xl max-w-md w-full p-6 card-shadow">
+        <h3 class="font-display text-2xl text-stone-700 mb-2 modal-reserve-title">Rezervovať darček</h3>
+        <p id="modal-wish-title" class="text-stone-600 mb-4"></p>
+
+        <form id="reserve-form">
+          <input type="hidden" id="reserve-wish-id">
+
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-stone-600 mb-1 modal-reserve-name">Vaše meno *</label>
+            <input type="text" id="reserve-name" required maxlength="80" class="w-full px-4 py-2 border border-stone-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none" placeholder="Zadajte vaše meno">
+            <p id="reserve-note" class="text-xs text-stone-400 mt-2">Tvoje meno vidí iba admin. Ostatní hostia ho neuvidia.</p>
+          </div>
+
+          <div class="flex gap-3">
+            <button type="button" id="cancel-reserve" class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium py-2.5 px-4 rounded-lg transition-colors modal-cancel">Zrušiť</button>
+            <button type="submit" id="confirm-reserve" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 modal-reserve-btn">
+              <i data-lucide="check" class="w-5 h-5"></i>
+              <span>Rezervovať</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="delete-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-2xl max-w-sm w-full p-6 card-shadow">
+        <h3 class="font-display text-xl text-stone-700 mb-2 modal-delete-title">Odstrániť želanie?</h3>
+        <p class="text-stone-600 mb-4 modal-delete-desc">Túto akciu nemožno zrušiť.</p>
+        <input type="hidden" id="delete-wish-id">
+
+        <div class="flex gap-3">
+          <button type="button" id="cancel-delete" class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium py-2.5 px-4 rounded-lg transition-colors modal-cancel">Zrušiť</button>
+          <button type="button" id="confirm-delete" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors modal-delete-btn">Odstrániť</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+  </div>
+
+  <script>
+    const ADMIN_PIN = '1234';
+    const STORAGE_KEY_WISHES = 'wedding_wishlist_items_v2';
+
+    const translations = {
+      uk: {
+        page_title: 'Наш весільний Wishlist',
+        welcome_message: 'Дякуємо, що святкуєте з нами! Оберіть подарунок і зарезервуйте його.',
+        flexible_text: 'або щось на ваш розсуд',
+        add_wish_title: 'Додати бажання',
+        edit_wish_title: 'Редагувати бажання',
+        wish_label_name: 'Назва *',
+        wish_placeholder_name: 'Кавоварка Delonghi',
+        wish_label_desc: 'Опис',
+        wish_placeholder_desc: 'Коротко про бажання...',
+        wish_label_link: 'Посилання',
+        wish_label_price: 'Орієнтовна ціна',
+        wish_label_image: 'Додати фото',
+        upload_image_text: 'Виберіть фото',
+        submit_text: 'Додати',
+        update_text: 'Оновити',
+        admin_toggle_edit: 'Режим редагування',
+        admin_toggle_guest: 'Режим гостя',
+        stat_all: 'всього бажань',
+        stat_available: 'доступно',
+        stat_reserved: 'зарезервовано',
+        empty_state_text: 'Список бажань порожній',
+        empty_state_desc: 'Увімкніть режим редагування, щоб додати перше бажання',
+        modal_reserve_title: 'Зарезервувати подарунок',
+        modal_reserve_name: 'Ваше ім\'я *',
+        reserve_note: 'Ваше ім’я бачить лише admin. Ostatní hostia ho neuvidia.',
+        modal_cancel: 'Скасувати',
+        modal_reserve_btn: 'Резервувати',
+        modal_delete_title: 'Видалити бажання?',
+        modal_delete_desc: 'Цю дію неможливо скасувати.',
+        modal_delete_btn: 'Видалити',
+        toast_added: 'Бажання додано!',
+        toast_updated: 'Бажання оновлено!',
+        toast_reserved: 'Подарунок зарезервовано!',
+        toast_unreserved: 'Резерв скасовано',
+        toast_deleted: 'Бажання видалено',
+        toast_error: 'Помилка',
+        toast_limit: 'Досягнуто ліміт бажань (999)',
+        toast_invalid_link: 'Некоректне посилання',
+        toast_invalid_image: 'Некоректне фото',
+        toast_pin_wrong: 'Неправильний PIN',
+        card_reserve_btn: 'Зарезервувати',
+        card_delete_btn: 'Видалити',
+        card_edit_btn: 'Редагувати',
+        card_reserved: 'Зарезервовано',
+        card_reserved_by: 'Заброньовано гостем',
+        card_unreserve_btn: 'Скасувати rezerváciu'
+      },
+      sk: {
+        page_title: 'Náš svadobný Wishlist',
+        welcome_message: 'Ďakujeme, že s nami oslavujete! Vyberte si darček a rezervujte si ho.',
+        flexible_text: 'alebo niečo podľa vášho uváženia',
+        add_wish_title: 'Pridať želanie',
+        edit_wish_title: 'Upraviť želanie',
+        wish_label_name: 'Názov *',
+        wish_placeholder_name: 'Kávovar Delonghi',
+        wish_label_desc: 'Popis',
+        wish_placeholder_desc: 'Krátko o želaní...',
+        wish_label_link: 'Odkaz',
+        wish_label_price: 'Odhadovaná cena',
+        wish_label_image: 'Pridať foto',
+        upload_image_text: 'Vyberte foto',
+        submit_text: 'Pridať',
+        update_text: 'Aktualizovať',
+        admin_toggle_edit: 'Režim úpravy',
+        admin_toggle_guest: 'Režim hosťa',
+        stat_all: 'spolu želaní',
+        stat_available: 'dostupné',
+        stat_reserved: 'rezervované',
+        empty_state_text: 'Zoznam želaní je prázdny',
+        empty_state_desc: 'Zapnite režim úpravy a pridajte prvé želanie',
+        modal_reserve_title: 'Rezervovať darček',
+        modal_reserve_name: 'Vaše meno *',
+        reserve_note: 'Tvoje meno vidí iba admin. Ostatní hostia ho neuvidia.',
+        modal_cancel: 'Zrušiť',
+        modal_reserve_btn: 'Rezervovať',
+        modal_delete_title: 'Odstrániť želanie?',
+        modal_delete_desc: 'Túto akciu nemožno zrušiť.',
+        modal_delete_btn: 'Odstrániť',
+        toast_added: 'Želanie bolo pridané!',
+        toast_updated: 'Želanie bolo upravené!',
+        toast_reserved: 'Darček bol rezervovaný!',
+        toast_unreserved: 'Rezervácia bola zrušená',
+        toast_deleted: 'Želanie bolo odstránené',
+        toast_error: 'Chyba',
+        toast_limit: 'Bol dosiahnutý limit želaní (999)',
+        toast_invalid_link: 'Neplatný odkaz',
+        toast_invalid_image: 'Neplatný obrázok',
+        toast_pin_wrong: 'Nesprávny PIN',
+        card_reserve_btn: 'Rezervovať',
+        card_delete_btn: 'Odstrániť',
+        card_edit_btn: 'Upraviť',
+        card_reserved: 'Rezervované',
+        card_reserved_by: 'Rezervované hosťom',
+        card_unreserve_btn: 'Zrušiť rezerváciu'
+      }
+    };
+
+    let wishes = [];
+    let isAdminMode = false;
+    let currentRecordCount = 0;
+    let currentLanguage = 'sk';
+
+    function escapeHtml(value = '') {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function safeUrl(url) {
+      if (!url) return '';
+      const trimmed = String(url).trim();
+      try {
+        const parsed = new URL(trimmed);
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+          return parsed.href;
+        }
+        return '';
+      } catch {
+        return '';
+      }
+    }
+
+    function isSafeDataImage(url) {
+      return typeof url === 'string' && /^data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,/i.test(url);
+    }
+
+    function safeImageUrl(url) {
+      if (!url) return '';
+      if (isSafeDataImage(url)) return url;
+      return safeUrl(url);
+    }
+
+    function uid() {
+      return crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    }
+
+    function loadWishes() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_WISHES);
+        return raw ? JSON.parse(raw) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveWishes(data) {
+      localStorage.setItem(STORAGE_KEY_WISHES, JSON.stringify(data));
+      wishes = data;
+      currentRecordCount = data.length;
+      renderWishes();
+      updateStats();
+    }
+
+    function switchLanguage(lang) {
+      currentLanguage = lang;
+      document.documentElement.lang = lang;
+
+      document.getElementById('lang-uk').classList.toggle('bg-amber-600', lang === 'uk');
+      document.getElementById('lang-uk').classList.toggle('text-white', lang === 'uk');
+      document.getElementById('lang-uk').classList.toggle('text-stone-600', lang !== 'uk');
+
+      document.getElementById('lang-sk').classList.toggle('bg-amber-600', lang === 'sk');
+      document.getElementById('lang-sk').classList.toggle('text-white', lang === 'sk');
+      document.getElementById('lang-sk').classList.toggle('text-stone-600', lang !== 'sk');
+
+      updateLanguage();
+    }
+
+    function updateLanguage() {
+      const t = translations[currentLanguage];
+
+      document.getElementById('page-title').textContent = t.page_title;
+      document.getElementById('welcome-message').textContent = t.welcome_message;
+      document.getElementById('flexible-text').textContent = t.flexible_text;
+
+      document.querySelectorAll('.wish-label-name').forEach(el => el.textContent = t.wish_label_name);
+      document.querySelectorAll('.wish-label-desc').forEach(el => el.textContent = t.wish_label_desc);
+      document.querySelectorAll('.wish-label-link').forEach(el => el.textContent = t.wish_label_link);
+      document.querySelectorAll('.wish-label-price').forEach(el => el.textContent = t.wish_label_price);
+      document.querySelectorAll('.wish-label-image').forEach(el => el.textContent = t.wish_label_image);
+
+      document.getElementById('wish-title').placeholder = t.wish_placeholder_name;
+      document.getElementById('wish-description').placeholder = t.wish_placeholder_desc;
+
+      document.querySelector('.add-wish-title').textContent = document.getElementById('edit-wish-id').value ? t.edit_wish_title : t.add_wish_title;
+      document.querySelector('.upload-image-text').textContent = t.upload_image_text;
+      document.querySelector('.submit-text').textContent = document.getElementById('edit-wish-id').value ? t.update_text : t.submit_text;
+      document.getElementById('admin-toggle-text').textContent = isAdminMode ? t.admin_toggle_guest : t.admin_toggle_edit;
+
+      document.querySelectorAll('.stat-all').forEach(el => el.textContent = t.stat_all);
+      document.querySelectorAll('.stat-available').forEach(el => el.textContent = t.stat_available);
+      document.querySelectorAll('.stat-reserved').forEach(el => el.textContent = t.stat_reserved);
+
+      document.querySelectorAll('.empty-state-text').forEach(el => el.textContent = t.empty_state_text);
+      document.querySelectorAll('.empty-state-desc').forEach(el => el.textContent = t.empty_state_desc);
+
+      document.querySelectorAll('.modal-reserve-title').forEach(el => el.textContent = t.modal_reserve_title);
+      document.querySelectorAll('.modal-reserve-name').forEach(el => el.textContent = t.modal_reserve_name);
+      document.getElementById('reserve-note').textContent = t.reserve_note;
+
+      document.querySelectorAll('.modal-delete-title').forEach(el => el.textContent = t.modal_delete_title);
+      document.querySelectorAll('.modal-delete-desc').forEach(el => el.textContent = t.modal_delete_desc);
+      document.querySelectorAll('.modal-cancel').forEach(el => el.textContent = t.modal_cancel);
+
+      document.querySelectorAll('.modal-reserve-btn').forEach(el => {
+        const span = el.querySelector('span');
+        if (span) span.textContent = t.modal_reserve_btn;
+      });
+
+      document.querySelectorAll('.modal-delete-btn').forEach(el => el.textContent = t.modal_delete_btn);
+
+      renderWishes();
+    }
+
+    function showToast(messageKey, type = 'success', details = '') {
+      const t = translations[currentLanguage];
+      let message = t[messageKey] || messageKey;
+      if (details) message += ': ' + details;
+
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 max-w-sm ${
+        type === 'success' ? 'bg-emerald-500 text-white' :
+        type === 'error' ? 'bg-red-500 text-white' :
+        'bg-amber-500 text-white'
+      }`;
+
+      toast.innerHTML = `
+        <i data-lucide="${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'alert-circle'}" class="w-5 h-5 flex-shrink-0"></i>
+        <span class="text-sm">${escapeHtml(message)}</span>
+      `;
+
+      container.appendChild(toast);
+      lucide.createIcons();
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    function setButtonLoading(button, html) {
+      button.disabled = true;
+      button.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function restoreSubmitButton() {
+      const t = translations[currentLanguage];
+      const submitBtn = document.getElementById('submit-btn');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<i data-lucide="plus" class="w-5 h-5"></i><span class="submit-text">${document.getElementById('edit-wish-id').value ? t.update_text : t.submit_text}</span>`;
+      lucide.createIcons();
+    }
+
+    document.getElementById('upload-image-btn').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('wish-image-file').click();
+    });
+
+    document.getElementById('wish-image-file').addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showToast('toast_invalid_image', 'error');
+        e.target.value = '';
+        return;
+      }
+
+      if (file.size > 3 * 1024 * 1024) {
+        showToast('toast_error', 'error', 'Max 3 MB');
+        e.target.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const preview = document.getElementById('image-preview');
+        preview.src = String(event.target?.result || '');
+        preview.classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function sortWishes(data) {
+      return [...data].sort((a, b) => {
+        const aTime = a?.created_at ? new Date(a.created_at).getTime() : 0;
+        const bTime = b?.created_at ? new Date(b.created_at).getTime() : 0;
+        return bTime - aTime;
+      });
+    }
+
+    function renderWishes() {
+      const grid = document.getElementById('wishes-grid');
+      const emptyState = document.getElementById('empty-state');
+
+      if (wishes.length === 0) {
+        grid.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      grid.innerHTML = '';
+
+      const sortedWishes = sortWishes(wishes);
+      sortedWishes.forEach((wish, index) => {
+        const card = createWishCard(wish, index);
+        grid.appendChild(card);
+      });
+
+      lucide.createIcons();
+    }
+
+    function buildFallbackImageHtml() {
+      return `
+        <div class="aspect-video bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center">
+          <i data-lucide="gift" class="w-16 h-16 text-stone-300"></i>
+        </div>
+      `;
+    }
+
+    function createWishCard(wish, index) {
+      const card = document.createElement('div');
+      card.dataset.wishId = wish.id;
+      card.className = 'bg-white rounded-2xl card-shadow overflow-hidden animate-fade-in relative';
+      card.style.animationDelay = `${index * 0.05}s`;
+
+      const t = translations[currentLanguage];
+      const title = escapeHtml(wish.title || '');
+      const description = escapeHtml(wish.description || '');
+      const price = escapeHtml(wish.price || '');
+      const reservedBy = escapeHtml(wish.reserved_by || '');
+      const link = safeUrl(wish.link || '');
+      const imageUrl = safeImageUrl(wish.image_url || '');
+      const hasImage = Boolean(imageUrl);
+
+      card.innerHTML = `
+        ${wish.reserved ? `
+          <div class="absolute inset-0 reserved-overlay flex flex-col items-center justify-center text-white z-10 p-4 text-center">
+            <i data-lucide="gift" class="w-12 h-12 mb-2"></i>
+            <p class="font-display text-xl">${escapeHtml(t.card_reserved)}</p>
+            <p class="text-sm opacity-90">${isAdminMode && reservedBy ? reservedBy : escapeHtml(t.card_reserved_by)}</p>
+            ${isAdminMode ? `
+              <button class="unreserve-btn mt-3 px-4 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm transition-colors" type="button">
+                ${escapeHtml(t.card_unreserve_btn)}
+              </button>
+            ` : ''}
+          </div>
+        ` : ''}
+
+        ${hasImage ? `
+          <div class="aspect-video bg-stone-100 relative overflow-hidden">
+            <img src="${imageUrl}" alt="${title}" class="wish-image w-full h-full object-cover" loading="lazy">
+          </div>
+        ` : buildFallbackImageHtml()}
+
+        <div class="p-5">
+          <h3 class="font-display text-xl text-stone-700 mb-1 break-words">${title}</h3>
+          ${description ? `<p class="text-stone-500 text-sm mb-3 break-words">${description}</p>` : ''}
+
+          <div class="flex items-center justify-between mb-4 gap-3">
+            ${price ? `<span class="text-amber-600 font-medium break-words">${price}</span>` : '<span></span>'}
+            ${link ? `
+              <a href="${link}" target="_blank" rel="noopener noreferrer nofollow" class="text-stone-400 hover:text-amber-600 transition-colors shrink-0" aria-label="Open product link">
+                <i data-lucide="external-link" class="w-5 h-5"></i>
+              </a>
+            ` : ''}
+          </div>
+
+          ${!wish.reserved ? `
+            <button class="reserve-btn w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2" type="button">
+              <i data-lucide="bookmark" class="w-5 h-5"></i>
+              ${escapeHtml(t.card_reserve_btn)}
+            </button>
+          ` : ''}
+
+          ${isAdminMode ? `
+            <div class="mt-2 grid grid-cols-2 gap-2">
+              <button class="edit-btn w-full bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2" type="button">
+                <i data-lucide="pencil" class="w-4 h-4"></i>
+                <span class="card-edit-btn">${escapeHtml(t.card_edit_btn)}</span>
+              </button>
+
+              <button class="delete-btn w-full bg-stone-100 hover:bg-red-100 text-stone-600 hover:text-red-600 font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2" type="button">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                ${escapeHtml(t.card_delete_btn)}
+              </button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      const img = card.querySelector('.wish-image');
+      if (img) {
+        img.addEventListener('error', () => {
+          const wrapper = img.parentElement;
+          if (wrapper) {
+            wrapper.outerHTML = buildFallbackImageHtml();
+            lucide.createIcons();
+          }
+        });
+      }
+
+      const reserveBtn = card.querySelector('.reserve-btn');
+      if (reserveBtn) reserveBtn.addEventListener('click', () => openReserveModal(wish.id, wish.title));
+
+      const editBtn = card.querySelector('.edit-btn');
+      if (editBtn) editBtn.addEventListener('click', () => editWish(wish.id));
+
+      const deleteBtn = card.querySelector('.delete-btn');
+      if (deleteBtn) deleteBtn.addEventListener('click', () => openDeleteModal(wish.id));
+
+      const unreserveBtn = card.querySelector('.unreserve-btn');
+      if (unreserveBtn) unreserveBtn.addEventListener('click', () => unreserveWish(wish.id));
+
+      return card;
+    }
+
+    function updateStats() {
+      const total = wishes.length;
+      const reserved = wishes.filter(w => w.reserved).length;
+      const available = total - reserved;
+
+      document.getElementById('total-count').textContent = String(total);
+      document.getElementById('available-count').textContent = String(available);
+      document.getElementById('reserved-count').textContent = String(reserved);
+    }
+
+    function askForAdminAccess() {
+      if (!ADMIN_PIN) return true;
+      const entered = window.prompt('Admin PIN:');
+      return entered === ADMIN_PIN;
+    }
+
+    function toggleAdminMode() {
+      const form = document.getElementById('add-form');
+      const t = translations[currentLanguage];
+
+      if (!isAdminMode) {
+        if (!askForAdminAccess()) {
+          showToast('toast_pin_wrong', 'error');
+          return;
+        }
+      }
+
+      isAdminMode = !isAdminMode;
+
+      if (isAdminMode) {
+        form.classList.remove('hidden');
+      } else {
+        form.classList.add('hidden');
+        cancelEdit();
+      }
+
+      document.getElementById('admin-toggle-text').textContent = isAdminMode ? t.admin_toggle_guest : t.admin_toggle_edit;
+      renderWishes();
+    }
+
+    async function addWish(e) {
+      e.preventDefault();
+      const t = translations[currentLanguage];
+
+      const title = document.getElementById('wish-title').value?.trim();
+      const description = document.getElementById('wish-description').value?.trim() || '';
+      const rawLink = document.getElementById('wish-link').value?.trim() || '';
+      const price = document.getElementById('wish-price').value?.trim() || '';
+      const editingId = document.getElementById('edit-wish-id').value;
+      const imagePreview = document.getElementById('image-preview');
+      const rawImageUrl = (imagePreview && !imagePreview.classList.contains('hidden') && imagePreview.src) ? imagePreview.src : '';
+
+      if (!title) {
+        showToast('toast_error', 'error', currentLanguage === 'sk' ? 'Napíš názov darčeka' : 'Напишіть назву подарунка');
+        return;
+      }
+
+      const link = rawLink ? safeUrl(rawLink) : '';
+      if (rawLink && !link) {
+        showToast('toast_invalid_link', 'error', rawLink);
+        return;
+      }
+
+      const imageUrl = rawImageUrl ? safeImageUrl(rawImageUrl) : '';
+      if (rawImageUrl && !imageUrl) {
+        showToast('toast_invalid_image', 'error');
+        return;
+      }
+
+      const submitBtn = document.getElementById('submit-btn');
+      setButtonLoading(submitBtn, '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>');
+
+      try {
+        if (editingId) {
+          const wish = wishes.find(w => w.id === editingId);
+          if (!wish) throw new Error('Wish not found');
+
+          const updatedWish = {
+            ...wish,
+            title,
+            description,
+            link,
+            image_url: imageUrl || wish.image_url || '',
+            price
+          };
+
+          const data = wishes.map(w => w.id === editingId ? updatedWish : w);
+          saveWishes(data);
+          cancelEdit();
+          showToast('toast_updated');
+        } else {
+          if (currentRecordCount >= 999) {
+            showToast('toast_limit', 'error');
+            restoreSubmitButton();
+            return;
+          }
+
+          const wish = {
+            id: uid(),
+            title,
+            description,
+            link,
+            image_url: imageUrl,
+            price,
+            reserved: false,
+            reserved_by: '',
+            created_at: new Date().toISOString()
+          };
+
+          saveWishes([...wishes, wish]);
+
+          document.getElementById('wish-form').reset();
+          imagePreview.classList.add('hidden');
+          imagePreview.src = '';
+          document.getElementById('wish-image-file').value = '';
+          showToast('toast_added');
+        }
+      } catch (error) {
+        console.error(error);
+        showToast('toast_error', 'error', error.message || 'Unknown error');
+      } finally {
+        restoreSubmitButton();
+      }
+    }
+
+    function cancelEdit() {
+      document.getElementById('edit-wish-id').value = '';
+      document.getElementById('wish-form').reset();
+      document.getElementById('wish-image-file').value = '';
+
+      const preview = document.getElementById('image-preview');
+      preview.src = '';
+      preview.classList.add('hidden');
+
+      document.getElementById('cancel-edit-btn').classList.add('hidden');
+
+      const t = translations[currentLanguage];
+      document.querySelector('.add-wish-title').textContent = t.add_wish_title;
+      document.querySelector('.submit-text').textContent = t.submit_text;
+    }
+
+    function editWish(wishId) {
+      const wish = wishes.find(w => w.id === wishId);
+      if (!wish) return;
+
+      const t = translations[currentLanguage];
+
+      document.getElementById('wish-title').value = wish.title || '';
+      document.getElementById('wish-description').value = wish.description || '';
+      document.getElementById('wish-link').value = wish.link || '';
+      document.getElementById('wish-price').value = wish.price || '';
+
+      const preview = document.getElementById('image-preview');
+      if (wish.image_url) {
+        preview.src = wish.image_url;
+        preview.classList.remove('hidden');
+      } else {
+        preview.src = '';
+        preview.classList.add('hidden');
+      }
+
+      document.getElementById('edit-wish-id').value = wishId;
+      document.querySelector('.add-wish-title').textContent = t.edit_wish_title;
+      document.querySelector('.submit-text').textContent = t.update_text;
+      document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+      document.getElementById('add-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function openReserveModal(wishId, wishTitle) {
+      document.getElementById('reserve-wish-id').value = wishId;
+      document.getElementById('modal-wish-title').textContent = wishTitle;
+      document.getElementById('reserve-name').value = '';
+      document.getElementById('reserve-modal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('reserve-name').focus(), 50);
+    }
+
+    function closeReserveModal() {
+      document.getElementById('reserve-modal').classList.add('hidden');
+    }
+
+    function reserveWish(e) {
+      e.preventDefault();
+      const t = translations[currentLanguage];
+
+      const wishId = document.getElementById('reserve-wish-id').value;
+      const reservedBy = document.getElementById('reserve-name').value.trim();
+      if (!reservedBy) return;
+
+      const wish = wishes.find(w => w.id === wishId);
+      if (!wish) return;
+
+      const confirmBtn = document.getElementById('confirm-reserve');
+      setButtonLoading(confirmBtn, '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>');
+
+      try {
+        const updatedWish = { ...wish, reserved: true, reserved_by: reservedBy };
+        const data = wishes.map(w => w.id === wishId ? updatedWish : w);
+        saveWishes(data);
+        closeReserveModal();
+        showToast('toast_reserved');
+      } catch (error) {
+        showToast('toast_error', 'error', error.message || '');
+      } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = `<i data-lucide="check" class="w-5 h-5"></i><span>${escapeHtml(t.modal_reserve_btn)}</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    function unreserveWish(wishId) {
+      try {
+        const wish = wishes.find(w => w.id === wishId);
+        if (!wish) return;
+
+        const updatedWish = { ...wish, reserved: false, reserved_by: '' };
+        const data = wishes.map(w => w.id === wishId ? updatedWish : w);
+        saveWishes(data);
+        showToast('toast_unreserved');
+      } catch (error) {
+        showToast('toast_error', 'error', error.message || '');
+      }
+    }
+
+    function openDeleteModal(wishId) {
+      document.getElementById('delete-wish-id').value = wishId;
+      document.getElementById('delete-modal').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('delete-modal').classList.add('hidden');
+    }
+
+    function deleteWish() {
+      const wishId = document.getElementById('delete-wish-id').value;
+      const confirmBtn = document.getElementById('confirm-delete');
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = translations[currentLanguage].modal_delete_btn + '...';
+
+      try {
+        const data = wishes.filter(w => w.id !== wishId);
+        saveWishes(data);
+        closeDeleteModal();
+        showToast('toast_deleted');
+      } catch (error) {
+        showToast('toast_error', 'error', error.message || '');
+      } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = translations[currentLanguage].modal_delete_btn;
+      }
+    }
+
+    function init() {
+      wishes = loadWishes();
+      currentRecordCount = wishes.length;
+
+      document.documentElement.lang = currentLanguage;
+
+      document.getElementById('lang-uk').addEventListener('click', () => switchLanguage('uk'));
+      document.getElementById('lang-sk').addEventListener('click', () => switchLanguage('sk'));
+      document.getElementById('admin-toggle').addEventListener('click', toggleAdminMode);
+      document.getElementById('wish-form').addEventListener('submit', addWish);
+      document.getElementById('cancel-edit-btn').addEventListener('click', cancelEdit);
+      document.getElementById('reserve-form').addEventListener('submit', reserveWish);
+      document.getElementById('cancel-reserve').addEventListener('click', closeReserveModal);
+      document.getElementById('cancel-delete').addEventListener('click', closeDeleteModal);
+      document.getElementById('confirm-delete').addEventListener('click', deleteWish);
+
+      document.getElementById('reserve-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'reserve-modal') closeReserveModal();
+      });
+
+      document.getElementById('delete-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'delete-modal') closeDeleteModal();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeReserveModal();
+          closeDeleteModal();
+        }
+      });
+
+      updateLanguage();
+      updateStats();
+      lucide.createIcons();
+    }
+
+    init();
+  </script>
+</body>
+</html>
