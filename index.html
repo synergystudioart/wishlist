@@ -527,9 +527,6 @@
         .select('*')
         .order('created_at', { ascending: false });
 
-    console.log('SUPABASE wishes data:', data);
-    console.log('SUPABASE wishes error:', error);
-
       if (error) {
         console.error(error);
         showToast('toast_error', 'error', error.message);
