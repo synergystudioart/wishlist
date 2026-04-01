@@ -858,12 +858,10 @@
 
       try {
         const { error } = await supabaseClient
-          .from('wishes')
-          .update({
-            reserved: true,
-            reserved_by: reservedBy
-          })
-          .eq('id', wishId);
+		  .rpc('reserve_wish', {
+			wish_id: wishId,
+			guest_name: reservedBy
+		  });
 
         if (error) throw error;
 
