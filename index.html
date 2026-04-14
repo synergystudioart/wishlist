@@ -575,7 +575,7 @@
 
         card.innerHTML = `
           ${wish.reserved ? `
-            <div class="absolute inset-0 reserved-overlay flex flex-col items-center justify-center text-white z-10 p-4 text-center">
+            <div class="absolute inset-x-0 top-0 reserved-overlay flex flex-col items-center justify-center text-white z-10 p-4 text-center aspect-video">
               <i data-lucide="gift" class="w-12 h-12 mb-2"></i>
               <p class="font-display text-xl">${escapeHtml(t.card_reserved)}</p>
               <p class="text-sm opacity-90">${isAdmin() && reservedBy ? reservedBy : escapeHtml(t.card_reserved_by)}</p>
